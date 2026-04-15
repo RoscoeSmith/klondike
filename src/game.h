@@ -8,8 +8,10 @@
 #include <algorithm>
 #include <string>
 #include <sstream>
+#include <iostream>
 
 using std::array, std::span, std::string, std::stringstream;
+using std::cout;
 
 const size_t TABLEAU_SIZE = 19;
 const size_t FOUNDATION_SIZE = 13;
@@ -22,18 +24,18 @@ struct Klondike {
         array<Card, STOCK_SIZE> stock;
         uint waste_cap;
 
-        State(array<Card, 52>& cards) {
-            // default-init arrays
-            tableau = { Card::NONE };
-            foundation = { Card::NONE };
-            
+        State(const Deck& cards) {
+            // init arrays with NONE cards
+            for (array<Card, TABLEAU_SIZE>& t : tableau) t.fill(Card::NONE);
+            for (array<Card, FOUNDATION_SIZE>& f : foundation) f.fill(Card::NONE);
+
             int c = 0;  // card counter
 
             // deal tableau
-            for (int pile = 1; pile < 8; ++pile) {
-                for (int i = 0; i < pile; ++i) {
+            for (int pile = 0; pile < 7; ++pile) {
+                for (int i = 0; i < pile + 1; ++i) {
                     tableau[pile][i] = cards[c];
-                    tableau[pile][i].face_up = (i == pile - 1);
+                    tableau[pile][i].face_up = (i == pile);
                     ++c;
                 }
             }
@@ -57,6 +59,7 @@ struct Klondike {
             if (waste_cap == STOCK_SIZE) reset_stock();
             while (n > 0 and waste_cap < STOCK_SIZE) {
                 ++waste_cap;
+                stock[waste_cap - 1].face_up = true;
                 if (stock[waste_cap - 1] != Card::NONE) {
                     --n;
                 }
@@ -65,6 +68,7 @@ struct Klondike {
 
         void reset_stock() {
             waste_cap = 0;
+            for (Card& c : stock) c.face_up = false;
         }
 
         void do_move(const Move m) {
@@ -125,17 +129,19 @@ struct Klondike {
                 out << c.debug_display() << " ";
                 ++counter;
             }
-            out << "\n";
+            out << "\n\n";
 
             // tableau
             out << "tableau:\n";
             for (const array<Card, TABLEAU_SIZE>& t : tableau) {
-                for (const Card& c : f) {
+                for (const Card& c : t) {
                     out << c.debug_display() << " ";
                 }
                 out << "\n";
             }
             out << "\n";
+
+            return out.str();
         }
     };
 };

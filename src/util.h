@@ -1,18 +1,49 @@
 #pragma once
 
 #include <array>
+#include <algorithm>
 #include <cstdint>
+#include <stdexcept>
 #include <string>
 #include <sstream>
+#include <exception>
+#include <random>
 
 typedef uint8_t uint8;
+
+// initialize RNG
+#define RNG_SEED 0
+static auto RNG = std::mt19937(RNG_SEED);
 
 enum Suit {
     SPADE = 0,
     HEART,
     CLUB,
-    DIAMOND
+    DIAMOND,
+    NO_SUIT
 };
+
+constexpr Suit operator++(Suit& s) {
+    switch (s) {
+        case SPADE:
+            s = HEART;
+            break;
+        case HEART:
+            s = CLUB;
+            break;
+        case CLUB:
+            s = DIAMOND;
+            break;
+        case DIAMOND:
+            s = NO_SUIT;
+            break;
+        case NO_SUIT:
+            throw std::range_error("Tried to increment NO_SUIT");
+            s = NO_SUIT;
+            break;
+    }
+    return s;
+}
 
 struct Card {
     uint8 rank;
@@ -27,14 +58,14 @@ struct Card {
     bool operator<(const Card& rhs) const { return rank < rhs.rank; }
 
     std::string debug_display() const {
-        if (is_none()) return "."
+        if (is_none()) return ".";
         std::stringstream out;
-        out << rank << "," << suit << (face_up ? "" : "?");
+        out << static_cast<int>(rank) << "," << static_cast<int>(suit) << (face_up ? "" : "?");
         return out.str();
     }
 };
 
-const Card Card::NONE = { .rank = 0 };
+const Card Card::NONE = { .rank = 0, .suit = NO_SUIT };
 
 enum PileType {
     TABLEAU = 0,
@@ -57,19 +88,24 @@ struct Move {
     }
 };
 
-constexpr std::array<Card, 52> unshuffled_deck() {
-    std::array<Card, 52> deck {};
-    for (int s = 0; s < 5; ++s) {
-        for (uint8 r = 1; r < 13; ++r) {
-            deck(12 * s + (r - 1)) = Card{ .rank = r, .suit = Suit(s), .face_up = false };
+// util for decks of 52 cards
+typedef std::array<Card, 52> Deck;
+
+constexpr Deck unshuffled_deck() {
+    Deck deck {};
+    for (Suit s = SPADE; s != NO_SUIT; ++s) {
+        for (uint8 r = 1; r < 14; ++r) {
+            deck[13 * static_cast<uint8>(s) + (r - 1)] = Card{ .rank = r, .suit = Suit(s), .face_up = false };
         }
     }
     return deck;
 }
 
-static constexpr std::array<Card, 52> UNSHUFFLED_DECK = unshuffled_deck();
+static constexpr Deck UNSHUFFLED_DECK = unshuffled_deck();
 
-std::array<Card, 52> shuffled_deck() {
-    std::array<Card, 52> deck = UNSHUFFLED_DECK;
+Deck shuffled_deck() {
+    Deck deck = UNSHUFFLED_DECK;
+    std::shuffle(deck.begin(), deck.end(), RNG);
+    return deck;
 }
 
