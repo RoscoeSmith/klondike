@@ -6,8 +6,10 @@
 #include <stdexcept>
 #include <cassert>
 #include <algorithm>
+#include <string>
+#include <sstream>
 
-using std::array, std::span;
+using std::array, std::span, std::string, std::stringstream;
 
 const size_t TABLEAU_SIZE = 19;
 const size_t FOUNDATION_SIZE = 13;
@@ -100,6 +102,40 @@ struct Klondike {
                     break;
             }
             move_cards(source_span, dest_span);
-        } 
+        }
+
+        string debug_display() const {
+            stringstream out;
+
+            // foundation
+            out << "foundation:\n";
+            for (const array<Card, FOUNDATION_SIZE>& f : foundation) {
+                for (const Card& c : f) {
+                    out << c.debug_display() << " ";
+                }
+                out << "\n";
+            }
+            out << "\n";
+
+            // stock
+            out << "stock:\n";
+            int counter = 0;
+            for (const Card& c : stock) {
+                if (counter == waste_cap) out << "| ";
+                out << c.debug_display() << " ";
+                ++counter;
+            }
+            out << "\n";
+
+            // tableau
+            out << "tableau:\n";
+            for (const array<Card, TABLEAU_SIZE>& t : tableau) {
+                for (const Card& c : f) {
+                    out << c.debug_display() << " ";
+                }
+                out << "\n";
+            }
+            out << "\n";
+        }
     };
 };
