@@ -22,7 +22,7 @@ struct Klondike {
         array<array<Card, TABLEAU_SIZE>, 7> tableau;
         array<array<Card, FOUNDATION_SIZE>, 4> foundation;
         array<Card, STOCK_SIZE> stock;
-        uint waste_cap;
+        uint8 waste_cap;
 
         State(const Deck& cards) {
             // init arrays with NONE cards
@@ -47,8 +47,19 @@ struct Klondike {
             waste_cap = 0;
         }
 
-        void move_cards(span<Card>& source, span<Card> dest) {
+        State(const array<array<Card, TABLEAU_SIZE>, 7> given_tableau, const array<array<Card,FOUNDATION_SIZE>, 4> given_foundation, const array<Card, STOCK_SIZE> given_stock, uint8 given_waste_cap)
+            : tableau(given_tableau), foundation(given_foundation), stock(given_stock), waste_cap(given_waste_cap) {}
+
+        void move_cards(span<Card>& source, span<Card>& dest) {
             assert(source.size() == dest.size());  // should be guaranteed by do_move
+
+            cout << "source size: " << source.size() << ", dest size: " << dest.size() << "\n";
+            cout << "view into source:";
+            for (const Card& c : source) cout << c;
+            cout << "\nview into dest:";
+            for (const Card& c : dest) cout << c;
+            cout << "\n";
+            
             for (int i = 0; i < source.size(); ++i) {
                 dest[i] = source[i];
                 source[i] = Card::NONE;
@@ -92,17 +103,23 @@ struct Klondike {
                 case TABLEAU:
                     if (tableau[m.source_pile][m.source_offset] == Card::NONE) throw std::out_of_range("Cannot move empty stack of cards");
                     source_span = span<Card>(tableau[m.source_pile].begin() + m.source_offset, std::find(tableau[m.source_pile].begin() + m.source_offset, tableau[m.source_pile].end(), Card::NONE));
+                    if (m.source_offset > 0 and not tableau[m.source_pile][m.source_offset - 1].face_up) {
+                        tableau[m.source_pile][m.source_offset - 1].face_up = true;
+                    }
                     break;                   
             }
+            uint8 dest_offset;
             switch (m.dest) {
                 case WASTE:
                     throw std::invalid_argument("Cannot move cards to waste pile");
                     break;
                 case FOUNDATION:
-                    dest_span = span<Card>(foundation[m.dest_pile].begin(), foundation[m.dest_pile].begin() + source_span.size());
+                    dest_offset = std::distance(foundation[m.dest_pile].begin(), std::find(foundation[m.dest_pile].begin(), foundation[m.dest_pile].end(), Card::NONE));
+                    dest_span = span<Card>(foundation[m.dest_pile].begin() + dest_offset, foundation[m.dest_pile].begin() + dest_offset + source_span.size());
                     break;
                 case TABLEAU:
-                    dest_span = span<Card>(tableau[m.dest_pile].begin(), tableau[m.dest_pile].begin() + source_span.size());
+                    dest_offset = std::distance(tableau[m.dest_pile].begin(), std::find(tableau[m.dest_pile].begin(), tableau[m.dest_pile].end(), Card::NONE));
+                    dest_span = span<Card>(tableau[m.dest_pile].begin() + dest_offset, tableau[m.dest_pile].begin() + dest_offset + source_span.size());
                     break;
             }
             move_cards(source_span, dest_span);

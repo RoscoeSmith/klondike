@@ -72,7 +72,7 @@ struct Card {
     bool operator<(const Card& rhs) const { return rank < rhs.rank; }
 
     const std::string display() const {
-        if (is_none()) return "   ";
+        if (is_none()) return "[   ]";
         std::stringstream out;
         if (face_up) {
             out << ANSI_CARD_FG_WHITE << "▐" << suit_to_ansi[suit] << ANSI_CARD_BG_FACEUP << rank_to_char[rank] << suit_to_char[suit] << ANSI_RESET << ANSI_CARD_FG_WHITE << "▌" << ANSI_RESET;
