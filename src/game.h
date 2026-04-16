@@ -115,7 +115,7 @@ struct Klondike {
             out << "foundation:\n";
             for (const array<Card, FOUNDATION_SIZE>& f : foundation) {
                 for (const Card& c : f) {
-                    out << c.debug_display() << " ";
+                    out << c;
                 }
                 out << "\n";
             }
@@ -126,7 +126,7 @@ struct Klondike {
             int counter = 0;
             for (const Card& c : stock) {
                 if (counter == waste_cap) out << "| ";
-                out << c.debug_display() << " ";
+                out << c;
                 ++counter;
             }
             out << "\n\n";
@@ -135,7 +135,7 @@ struct Klondike {
             out << "tableau:\n";
             for (const array<Card, TABLEAU_SIZE>& t : tableau) {
                 for (const Card& c : t) {
-                    out << c.debug_display() << " ";
+                    out << c;
                 }
                 out << "\n";
             }
