@@ -9,8 +9,9 @@
 #include <string>
 #include <sstream>
 #include <iostream>
+#include <vector>
 
-using std::array, std::span, std::string, std::stringstream;
+using std::array, std::span, std::vector, std::string, std::stringstream;
 using std::cout;
 
 const size_t TABLEAU_SIZE = 19;
@@ -97,7 +98,7 @@ struct Klondike {
         }
 
         void do_move(const Move m) {
-            span<Card> source_span, dest_span;            
+            span<Card> source_span, dest_span;
             switch (m.source) {
                 case WASTE:
                     // if both source and dest are WASTE, move is draw
@@ -137,13 +138,62 @@ struct Klondike {
         }
 
         void undo_move(const Move m) {
+            span<Card> source_span, dest_span;
             switch (m.source) {
                 case WASTE:
                     // if both source and dest are WASTE, move is draw
                     if (m.dest == WASTE) {
                         undo_draw(m.source_offset, m.reveal);
+                        return;
+                    } else {
+                        assert(waste_cap > 0 and stock[waste_cap - 1].is_none());
+                        dest_span = span<Card>(stock.begin() + waste_cap - 1, stock.begin() + waste_cap);
                     }
+                    break;
+                case FOUNDATION:
+                    break;
+                case TABLEAU:
+                    break;
             }
+            switch (m.dest) {
+                case WASTE:
+                    throw std::invalid_argument("Cannot move cards to waste pile (since this was triggered in undo_move, move was ill-formatted)");
+                    break;
+                case FOUNDATION:
+                    break;
+                case TABLEAU:
+                    break;
+            }
+        }
+
+        // get index of last non-NONE card in tableau piles
+        // (add one to each value to get first NONE card)
+        const array<int, 7> tableau_last_card_idxs() const {
+            array<int, 7> last_idxs;
+            for (int i = 0; i < 7; ++i) {
+                last_idxs[i] = std::distance(tableau[i].begin(), std::find(tableau[i].begin(), tableau[i].end(), Card::NONE)) - 1;
+            }
+            return last_idxs;
+        }
+
+        // get index of last non-NONE card in foundation piles
+        // (add one to each value to get first NONE card)
+        const array<int, 4> foundation_last_card_idxs() const {
+            array<int, 4> last_idxs;
+            for (int i = 0; i < 7; ++i) {
+                last_idxs[i] = std::distance(foundation[i].begin(), std::find(foundation[i].begin(), foundation[i].end(), Card::NONE)) - 1;
+            }
+            return last_idxs;
+        }
+
+        // TODO: write function to get first non-hidden card in tableau pile
+
+        const vector<Move> get_legal_moves() const {
+            vector<Move> legal_moves;
+
+            // TODO: implement
+
+            return legal_moves;
         }
 
         string debug_display() const {
