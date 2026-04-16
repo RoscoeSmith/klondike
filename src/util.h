@@ -113,10 +113,10 @@ struct Move {
     PileType source;
     PileType dest;
     uint8 source_pile;
-    uint8 source_offset;
+    uint8 source_offset;  // for draw moves, this encodes no. of cards drawn
     uint8 dest_pile;
     uint8 dest_offset;
-    bool reveal;
+    bool reveal;  // for draw moves, this represents if the stock was recycled
 
     static const Move draw(uint8 n) {
         return Move { .source = WASTE, .dest = WASTE, .source_offset = n };

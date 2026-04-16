@@ -71,9 +71,23 @@ struct Klondike {
             while (n > 0 and waste_cap < STOCK_SIZE) {
                 ++waste_cap;
                 stock[waste_cap - 1].face_up = true;
-                if (stock[waste_cap - 1] != Card::NONE) {
+                if (!stock[waste_cap - 1].is_none()) {
                     --n;
                 }
+            }
+        }
+
+        void undo_draw(uint8 n, bool unrecycle) {
+            while (n > 0 and waste_cap > 0) {
+                if (!stock[waste_cap - 1].is_none()) {
+                    --n;
+                }
+                --waste_cap;
+                stock[waste_cap].face_up = false;
+            }
+            if (unrecycle and n == 0) {
+                waste_cap = STOCK_SIZE;
+                for (Card& c : stock) c.face_up = true;
             }
         }
 
@@ -108,21 +122,28 @@ struct Klondike {
                     }
                     break;                   
             }
-            uint8 dest_offset;
             switch (m.dest) {
                 case WASTE:
                     throw std::invalid_argument("Cannot move cards to waste pile");
                     break;
                 case FOUNDATION:
-                    dest_offset = std::distance(foundation[m.dest_pile].begin(), std::find(foundation[m.dest_pile].begin(), foundation[m.dest_pile].end(), Card::NONE));
-                    dest_span = span<Card>(foundation[m.dest_pile].begin() + dest_offset, foundation[m.dest_pile].begin() + dest_offset + source_span.size());
+                    dest_span = span<Card>(foundation[m.dest_pile].begin() + m.dest_offset, foundation[m.dest_pile].begin() + m.dest_offset + source_span.size());
                     break;
                 case TABLEAU:
-                    dest_offset = std::distance(tableau[m.dest_pile].begin(), std::find(tableau[m.dest_pile].begin(), tableau[m.dest_pile].end(), Card::NONE));
-                    dest_span = span<Card>(tableau[m.dest_pile].begin() + dest_offset, tableau[m.dest_pile].begin() + dest_offset + source_span.size());
+                    dest_span = span<Card>(tableau[m.dest_pile].begin() + m.dest_offset, tableau[m.dest_pile].begin() + m.dest_offset + source_span.size());
                     break;
             }
             move_cards(source_span, dest_span);
+        }
+
+        void undo_move(const Move m) {
+            switch (m.source) {
+                case WASTE:
+                    // if both source and dest are WASTE, move is draw
+                    if (m.dest == WASTE) {
+                        undo_draw(m.source_offset, m.reveal);
+                    }
+            }
         }
 
         string debug_display() const {
