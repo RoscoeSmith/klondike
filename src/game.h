@@ -166,12 +166,16 @@ struct Klondike {
             }
         }
 
+        const int last_card_idx(const span<Card> pile) const {
+            return std::distance(pile.begin(), std::find(pile.begin(), pile.end(), Card::None)) - 1;
+        }
+
         // get index of last non-NONE card in tableau piles
         // (add one to each value to get first NONE card)
         const array<int, 7> tableau_last_card_idxs() const {
             array<int, 7> last_idxs;
             for (int i = 0; i < 7; ++i) {
-                last_idxs[i] = std::distance(tableau[i].begin(), std::find(tableau[i].begin(), tableau[i].end(), Card::NONE)) - 1;
+                last_idxs[i] = last_card_idx(span<Card>(tableau[i].begin(), tableau[i].end()));
             }
             return last_idxs;
         }
@@ -186,12 +190,39 @@ struct Klondike {
             return last_idxs;
         }
 
-        // TODO: write function to get first non-hidden card in tableau pile
+        const int first_empty_card_idx(const span<Card> pile) const {
+            int i = last_card_idx(pile) + 1;
+            if (i == pile.size()) i = -1;
+            return i;
+        }
+
+        const array<int, 7> tableau_first_empty_card_idxs() const {
+            array<int, 7> idxs = tableau_last_card_idxs();
+            for (int i = 0; i < 7; ++i) {
+                ++idxs[i];
+                if (idxs[i] == TABLEAU_SIZE) idxs[i] = -1;
+            }
+            return idxs;
+        }
+
+        const array<int, 7> foundation_first_empty_card_idxs() const {
+            array<int, 7> idxs = foundation_last_card_idxs();
+            for (int i = 0; i < 7; ++i) {
+                ++idxs[i];
+                if (idxs[i] == FOUNDATION_SIZE) idxs[i] = -1;
+            }
+            return idxs;
+        }
 
         const vector<Move> get_legal_moves() const {
             vector<Move> legal_moves;
 
             // TODO: implement
+
+            // get all last cards in piles
+            // get all face-up cards moveable to each last card
+                // store source pile and offset
+            // generate Move objs from these mappings
 
             return legal_moves;
         }
