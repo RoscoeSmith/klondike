@@ -143,7 +143,7 @@ struct Klondike {
                 case WASTE:
                     // if both source and dest are WASTE, move is draw
                     if (m.dest == WASTE) {
-                        undo_draw(m.source_offset, m.reveal);
+                        undo_draw(m.source_offset, m.extra);
                         return;
                     } else {
                         assert(waste_cap > 0 and stock[waste_cap - 1].is_none());
@@ -166,31 +166,31 @@ struct Klondike {
             }
         }
 
-        const int last_card_idx(const span<Card> pile) const {
-            return std::distance(pile.begin(), std::find(pile.begin(), pile.end(), Card::None)) - 1;
+        const int last_card_idx(const span<const Card> pile) const {
+            return std::distance(pile.begin(), std::find(pile.begin(), pile.end(), Card::NONE)) - 1;
         }
 
         // get index of last non-NONE card in tableau piles
         // (add one to each value to get first NONE card)
         const array<int, 7> tableau_last_card_idxs() const {
-            array<int, 7> last_idxs;
+            array<int, 7> idxs;
             for (int i = 0; i < 7; ++i) {
-                last_idxs[i] = last_card_idx(span<Card>(tableau[i].begin(), tableau[i].end()));
+                idxs[i] = last_card_idx(span<const Card>(tableau[i].begin(), tableau[i].end()));
             }
-            return last_idxs;
+            return idxs;
         }
 
         // get index of last non-NONE card in foundation piles
         // (add one to each value to get first NONE card)
         const array<int, 4> foundation_last_card_idxs() const {
-            array<int, 4> last_idxs;
-            for (int i = 0; i < 7; ++i) {
-                last_idxs[i] = std::distance(foundation[i].begin(), std::find(foundation[i].begin(), foundation[i].end(), Card::NONE)) - 1;
+            array<int, 4> idxs;
+            for (int i = 0; i < 4; ++i) {
+                idxs[i] = last_card_idx(span<const Card>(foundation[i].begin(), foundation[i].end()));
             }
-            return last_idxs;
+            return idxs;
         }
 
-        const int first_empty_card_idx(const span<Card> pile) const {
+        const int first_empty_card_idx(const span<const Card> pile) const {
             int i = last_card_idx(pile) + 1;
             if (i == pile.size()) i = -1;
             return i;
@@ -205,24 +205,105 @@ struct Klondike {
             return idxs;
         }
 
-        const array<int, 7> foundation_first_empty_card_idxs() const {
-            array<int, 7> idxs = foundation_last_card_idxs();
-            for (int i = 0; i < 7; ++i) {
+        const array<int, 4> foundation_first_empty_card_idxs() const {
+            array<int, 4> idxs = foundation_last_card_idxs();
+            for (int i = 0; i < 4; ++i) {
                 ++idxs[i];
                 if (idxs[i] == FOUNDATION_SIZE) idxs[i] = -1;
             }
             return idxs;
         }
 
-        const vector<Move> get_legal_moves() const {
+        const int first_face_up_card_idx(const span<const Card> pile) const {
+            int i = std::distance(pile.begin(), std::find_if(pile.begin(), pile.end(), [](const Card& c) { return c.face_up; }));
+            if (i == pile.size()) return -1;
+            else return i;
+        }
+
+        const array<int, 7> tableau_first_face_up_card_idxs() const {
+            array<int, 7> idxs;
+            for (int i = 0; i < 7; ++i) {
+                idxs[i] = first_face_up_card_idx(span<const Card>(tableau[i].begin(), tableau[i].end()));
+            }
+            return idxs;
+        }
+
+        const array<int, 4> foundation_first_face_up_card_idxs() const {
+            array<int, 4> idxs;
+            for (int i = 0; i < 4; ++i) {
+                idxs[i] = first_face_up_card_idx(span<const Card>(foundation[i].begin(), foundation[i].end()));
+            }
+            return idxs;
+        }
+
+        // get amount of non-NONE cards left in stock
+        const uint8 stock_left() const {
+            return STOCK_SIZE - waste_cap - std::count(stock.begin() + waste_cap, stock.end(), Card::NONE);
+            
+        }
+
+        const vector<Move> get_legal_moves(const uint8 draw_amount) const {
             vector<Move> legal_moves;
 
+            // get all last cards in piles
+            const array<int, 7> tableau_last_idxs = tableau_last_card_idxs();
+            const array<int, 4> foundation_last_idxs = foundation_last_card_idxs();
+
+            // get all face-up cards moveable to each last card
+            const array<int, 7> tableau_first_idxs = tableau_first_face_up_card_idxs();
+            const array<int, 4> foundation_first_idxs = foundation_first_face_up_card_idxs();
+
+            // moves to tableau
+            for (int dest = 0; dest < 7; ++dest) {
+                if (tableau_last_idxs[dest] == TABLEAU_SIZE) continue;  // impossible to move onto
+                if (tableau_last_idxs[dest] == -1) {
+                    // pile is empty, look for kings
+                    assert(tableau_first_idxs[dest] == -1);
+
+                    // check other tableau piles
+                    for (int source = 0; source < 7; ++source) {
+                        if (source == dest) continue;
+                        if (tableau[source][tableau_first_idxs[source]] >> Card::NONE) {
+                            bool reveal = tableau_first_idxs[source] > 0 and !tableau[source][tableau_first_idxs[source - 1]].face_up;
+                            legal_moves.emplace_back(TABLEAU, TABLEAU, static_cast<uint8>(source), static_cast<uint8>(tableau_first_idxs[source]), static_cast<uint8>(dest), 0, reveal);
+                        }
+                    }
+
+                    // check waste
+                    if (waste_cap > 0 and stock[waste_cap - 1] >> Card::NONE) {
+                        legal_moves.emplace_back(WASTE, TABLEAU, 0, waste_cap - 1, dest, 0, false);
+                    }
+                } else {
+                    // look for card that can go next in pile
+                    const Card last_card = tableau[dest][tableau_last_idxs[dest]];
+                    assert(last_card.face_up);
+
+                    // check other tableau piles
+                    for (int source = 0; source < 7; ++source) {
+                        if (source == dest) continue;
+                        const Card first_card = tableau[source][tableau_first_idxs[source]];
+                        int walk = first_card.rank - (last_card.rank - 1);
+                        if (tableau_first_idxs[source] + walk > tableau_last_idxs[source]) continue;  // sequence ends before possible valid card
+                        // could do sequence parity check but is it worth it?
+                        if (tableau[source][tableau_first_idxs[source] + walk] >> last_card) {
+                            // legal move
+                            bool reveal = tableau_first_idxs[source] > 0 and !tableau[source][tableau_first_idxs[source - 1]].face_up;
+                            legal_moves.emplace_back(TABLEAU, TABLEAU, static_cast<uint8>(source), static_cast<uint8>(tableau_first_idxs[source] + walk), static_cast<uint8>(dest), static_cast<uint8>(tableau_last_idxs[dest] + 1), reveal);
+                        }
+                    }
+
+                    // check waste
+                    if (waste_cap > 0 and stock[waste_cap - 1] >> last_card) {
+                        legal_moves.emplace_back(WASTE, TABLEAU, 0, waste_cap - 1, dest, 0, false);
+                    }
+                }
+            }
+
+            // moves to foundation
             // TODO: implement
 
-            // get all last cards in piles
-            // get all face-up cards moveable to each last card
-                // store source pile and offset
-            // generate Move objs from these mappings
+            // draw move
+            legal_moves.push_back(Move::draw(std::min(draw_amount, stock_left())));
 
             return legal_moves;
         }
@@ -263,4 +344,8 @@ struct Klondike {
             return out.str();
         }
     };
+};
+
+struct RichMove : public Move {
+    // TODO: add card data from given state to given move, return as rich move
 };

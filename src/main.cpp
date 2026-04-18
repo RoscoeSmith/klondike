@@ -37,6 +37,12 @@ int main(int argc, char** argv) {
 
     cout << s.debug_display();
 
+    cout << "legal moves:\n";
+    auto moves = s.get_legal_moves(3);
+    for (const auto& m : moves) {
+        cout << "\t" << m << "\n";
+    }
+
     s.do_move(Move{TABLEAU, TABLEAU, 1, 1, 0, 2, true});
 
     cout << s.debug_display();

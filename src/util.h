@@ -9,8 +9,16 @@
 #include <sstream>
 #include <exception>
 #include <random>
+#include <utility>
 
 typedef uint8_t uint8;
+
+std::ostream& operator<<(std::ostream& os, const uint8& i) {
+    os << static_cast<int>(i);
+    return os;
+}
+
+typedef std::pair<int, int> int_pair;
 
 // initialize RNG
 #define RNG_SEED 0
@@ -67,9 +75,26 @@ struct Card {
 
     const bool is_none() const { return *this == Card::NONE; }
     const bool is_black() const { return suit == SPADE or suit == CLUB; }
+    const bool is_red() const { return suit == DIAMOND or suit == HEART; }
 
+    // basic comparison
     bool operator==(const Card& other) const { return rank == other.rank and suit == other.suit; }
     bool operator<(const Card& rhs) const { return rank < rhs.rank; }
+
+    // card on lhs goes on top of rhs in foundation sequence
+    bool operator^(const Card& rhs) const {
+        if (rank == 1) return rhs.is_none();
+        else return suit == rhs.suit and rank == rhs.rank + 1;
+    }
+
+    // card on lhs goes on top of rhs in tableau sequence
+    bool operator>>(const Card& rhs) const {
+        if (rank == 13) return rhs.is_none();
+        else return !is_none() and rank == rhs.rank - 1 and ((is_black() and rhs.is_red()) or (is_red() and rhs.is_black()));
+    }
+    bool operator<<(const Card& rhs) const {
+        return rhs >> *this;
+    }
 
     const std::string display() const {
         if (is_none()) return "[   ]";
@@ -110,18 +135,59 @@ enum PileType {
 
 // move is draw if both source and dest are WASTE
 struct Move {
-    PileType source;
-    PileType dest;
-    uint8 source_pile;
-    uint8 source_offset;  // for draw moves, this encodes no. of cards drawn
-    uint8 dest_pile;
-    uint8 dest_offset;
-    bool reveal;  // for draw moves, this represents if the stock was recycled
+    const PileType source;
+    const PileType dest;
+    const uint8 source_pile;
+    const uint8 source_offset;  // for draw moves, this encodes no. of cards drawn
+    const uint8 dest_pile;
+    const uint8 dest_offset;
+    const bool extra;  // for draw moves, this represents if the stock was recycled
 
     static const Move draw(uint8 n) {
         return Move { .source = WASTE, .dest = WASTE, .source_offset = n };
     }
+
+    const std::string display() const {
+        std::stringstream out;
+        if (source == WASTE and dest == WASTE) {
+            if (extra) out << "recycle, ";
+            out << "draw " << source_offset;
+        } else {
+            std::string source_str;
+            std::string dest_str;
+            switch (source) {
+                case TABLEAU:
+                    source_str = "tableau";
+                    break;
+                case FOUNDATION:
+                    source_str = "foundation";
+                    break;
+                case WASTE:
+                    source_str = "waste";
+                    break;
+            }
+            switch (dest) {
+                case TABLEAU:
+                    dest_str = "tableau";
+                    break;
+                case FOUNDATION:
+                    dest_str = "foundation";
+                    break;
+                case WASTE:
+                    dest_str = "waste";
+                    break;
+            }
+            out << source_str << " " << source_pile << "," << source_offset << " to " << dest_str << " " << dest_pile << "," << dest_offset;
+            if (extra) out << ", reveal";
+        }
+        return out.str();
+    }
 };
+
+std::ostream& operator<<(std::ostream& os, const Move& move) {
+    os << move.display();
+    return os;
+}
 
 // util for decks of 52 cards
 typedef std::array<Card, 52> Deck;
