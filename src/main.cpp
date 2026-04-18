@@ -35,10 +35,12 @@ int main(int argc, char** argv) {
 
     Klondike::State s(tableau, foundation, stock, 0);
 
+    std::vector<Move> moves;
+
     cout << s.debug_display();
 
     cout << "legal moves:\n";
-    auto moves = s.get_legal_moves(3);
+    moves = s.get_legal_moves(3);
     for (const auto& m : moves) {
         cout << "\t" << m << "\n";
     }
@@ -47,9 +49,21 @@ int main(int argc, char** argv) {
 
     cout << s.debug_display();
 
+    cout << "legal moves:\n";
+    moves = s.get_legal_moves(3);
+    for (const auto& m : moves) {
+        cout << "\t" << m << "\n";
+    }
+
     s.do_move(Move{TABLEAU, FOUNDATION, 1, 0, 0, 0, false});
 
     cout << s.debug_display();
+
+    cout << "legal moves:\n";
+    moves = s.get_legal_moves(3);
+    for (const auto& m : moves) {
+        cout << "\t" << m << "\n";
+    }
 
     s.do_move(Move{WASTE, WASTE, 0, 3, 0, 0, false});
     

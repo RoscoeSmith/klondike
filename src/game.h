@@ -242,7 +242,7 @@ struct Klondike {
             
         }
 
-        const vector<Move> get_legal_moves(const uint8 draw_amount) const {
+        vector<Move> get_legal_moves(const uint8 draw_amount) const {
             vector<Move> legal_moves;
 
             // get all last cards in piles
@@ -256,51 +256,87 @@ struct Klondike {
             // moves to tableau
             for (int dest = 0; dest < 7; ++dest) {
                 if (tableau_last_idxs[dest] == TABLEAU_SIZE) continue;  // impossible to move onto
-                if (tableau_last_idxs[dest] == -1) {
-                    // pile is empty, look for kings
-                    assert(tableau_first_idxs[dest] == -1);
+                const Card last_card = tableau_last_idxs[dest] == -1 ? Card::NONE : tableau[dest][tableau_last_idxs[dest]];
+                // INFO:
+                // Below is commented out since code inside else block should work for both cases. PLEASE TEST THIS
+                
+                // if (tableau_last_idxs[dest] == -1) {
+                //     // pile is empty, look for kings
+                //     assert(tableau_first_idxs[dest] == -1);
 
-                    // check other tableau piles
-                    for (int source = 0; source < 7; ++source) {
-                        if (source == dest) continue;
-                        if (tableau[source][tableau_first_idxs[source]] >> Card::NONE) {
-                            bool reveal = tableau_first_idxs[source] > 0 and !tableau[source][tableau_first_idxs[source - 1]].face_up;
-                            legal_moves.emplace_back(TABLEAU, TABLEAU, static_cast<uint8>(source), static_cast<uint8>(tableau_first_idxs[source]), static_cast<uint8>(dest), 0, reveal);
-                        }
-                    }
+                //     // check other tableau piles
+                //     for (int source = 0; source < 7; ++source) {
+                //         if (source == dest) continue;
+                //         if (tableau[source][tableau_first_idxs[source]] >> last_card) {
+                //             const bool reveal = tableau_first_idxs[source] > 0 and !tableau[source][tableau_first_idxs[source - 1]].face_up;
+                //             legal_moves.emplace_back(TABLEAU, TABLEAU, source, tableau_first_idxs[source], dest, 0, reveal);
+                //         }
+                //     }
 
-                    // check waste
-                    if (waste_cap > 0 and stock[waste_cap - 1] >> Card::NONE) {
-                        legal_moves.emplace_back(WASTE, TABLEAU, 0, waste_cap - 1, dest, 0, false);
-                    }
-                } else {
+                //     // check waste
+                //     if (waste_cap > 0 and stock[waste_cap - 1] >> last_card) {
+                //         legal_moves.emplace_back(WASTE, TABLEAU, -1, waste_cap - 1, dest, 0, false);
+                //     }
+
+                //     // check foundation
+                //     for (int source = 0; source < 4; ++source) {
+                //         if (foundation[source][foundation_last_idxs[source]] >> last_card) {
+                //             legal_moves.emplace_back(FOUNDATION, TABLEAU, source, foundation_last_idxs[source], dest, 0, false);
+                //         }
+                //     }
+                    
+                // } else {
+
                     // look for card that can go next in pile
-                    const Card last_card = tableau[dest][tableau_last_idxs[dest]];
-                    assert(last_card.face_up);
+                    if (tableau_last_idxs[dest] != -1) assert(last_card.face_up);
 
                     // check other tableau piles
                     for (int source = 0; source < 7; ++source) {
                         if (source == dest) continue;
                         const Card first_card = tableau[source][tableau_first_idxs[source]];
-                        int walk = first_card.rank - (last_card.rank - 1);
-                        if (tableau_first_idxs[source] + walk > tableau_last_idxs[source]) continue;  // sequence ends before possible valid card
-                        // could do sequence parity check but is it worth it?
-                        if (tableau[source][tableau_first_idxs[source] + walk] >> last_card) {
-                            // legal move
-                            bool reveal = tableau_first_idxs[source] > 0 and !tableau[source][tableau_first_idxs[source - 1]].face_up;
-                            legal_moves.emplace_back(TABLEAU, TABLEAU, static_cast<uint8>(source), static_cast<uint8>(tableau_first_idxs[source] + walk), static_cast<uint8>(dest), static_cast<uint8>(tableau_last_idxs[dest] + 1), reveal);
+                        const int walk = first_card.rank - (last_card.is_none() ? 0 : last_card.rank - 1);  // no. of cards down in sequence to get valid card
+                        const int fi = tableau_first_idxs[source];
+                        if (fi + walk > tableau_last_idxs[source]) continue;  // sequence ends before possible valid card
+                        if (tableau[source][fi + walk] >> last_card) {
+                            const bool reveal = fi > 0 and !tableau[source][fi - 1].face_up;
+                            legal_moves.emplace_back(TABLEAU, TABLEAU, source, fi + walk, dest, tableau_last_idxs[dest] + 1, reveal);
                         }
                     }
 
                     // check waste
                     if (waste_cap > 0 and stock[waste_cap - 1] >> last_card) {
-                        legal_moves.emplace_back(WASTE, TABLEAU, 0, waste_cap - 1, dest, 0, false);
+                        legal_moves.emplace_back(WASTE, TABLEAU, -1, waste_cap - 1, dest, tableau_last_idxs[dest] + 1, false);
                     }
-                }
+
+                    // check foundation
+                    for (int source = 0; source < 4; ++source) {
+                        if (foundation[source][foundation_last_idxs[source]] >> last_card) {
+                            legal_moves.emplace_back(FOUNDATION, TABLEAU, source, foundation_last_idxs[source], dest, tableau_last_idxs[dest] + 1, false);
+                        }
+                    }
+                // }  // see above info
             }
 
             // moves to foundation
-            // TODO: implement
+            for (int dest = 0; dest < 4; ++dest) {
+                if (foundation_last_idxs[dest] == FOUNDATION_SIZE) continue;  // can't add to pile
+                const Card top_card = foundation[dest][foundation_last_idxs[dest]];
+
+                // check tableau piles
+                for (int source = 0; source < 7; ++source) {
+                    const int li = tableau_last_idxs[source];
+                    if (li == -1) continue;
+                    if (tableau[source][li] ^ top_card) {
+                        const bool reveal = li > 0 and !tableau[source][li - 1].face_up;
+                        legal_moves.emplace_back(TABLEAU, FOUNDATION, source, li, dest, foundation_last_idxs[dest] + 1, reveal);
+                    }
+                }
+
+                // check waste
+                if (waste_cap > 0 and stock[waste_cap - 1] ^ top_card) {
+                    legal_moves.emplace_back(WASTE, FOUNDATION, -1, waste_cap - 1, dest, foundation_last_idxs[dest] + 1, false);
+                }
+            }
 
             // draw move
             legal_moves.push_back(Move::draw(std::min(draw_amount, stock_left())));

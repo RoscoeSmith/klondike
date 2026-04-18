@@ -137,10 +137,10 @@ enum PileType {
 struct Move {
     const PileType source;
     const PileType dest;
-    const uint8 source_pile;
-    const uint8 source_offset;  // for draw moves, this encodes no. of cards drawn
-    const uint8 dest_pile;
-    const uint8 dest_offset;
+    const int source_pile;
+    const int source_offset;  // for draw moves, this encodes no. of cards drawn
+    const int dest_pile;
+    const int dest_offset;
     const bool extra;  // for draw moves, this represents if the stock was recycled
 
     static const Move draw(uint8 n) {
