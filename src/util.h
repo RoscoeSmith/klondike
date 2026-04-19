@@ -117,6 +117,35 @@ struct Card {
         out << rank_to_char[rank] << suit_to_char[suit] << (face_up ? "" : "?");
         return out.str();
     }
+
+    const std::string get_tag(const bool ansi = false) const {
+        std::stringstream out;
+
+        if (is_none()) {
+            if (ansi) {
+                out << ANSI_CARD_BG_FACEUP_THOUGHTFUL << ANSI_CARD_FG_BLACK << "--" << ANSI_RESET;
+            } else {
+                out << "--";
+            }
+        } else {
+            if (ansi) {
+                if (false) {  // to be used for thoughtful mode
+                    out << ANSI_CARD_BG_FACEUP_THOUGHTFUL;
+                } else {
+                    out << ANSI_CARD_BG_FACEUP;
+                }
+                out << suit_to_ansi[suit];
+            }
+            std::string r = rank_to_char[rank];
+            if (rank != 10) r = r.substr(0, 1);
+            out << r << suit_to_char[suit];
+            if (ansi) {
+                out << ANSI_RESET;
+            }
+        }
+
+        return out.str();
+    }
 };
 
 std::ostream& operator<<(std::ostream& os, const Card& card) {
@@ -143,11 +172,14 @@ struct Move {
     const int dest_offset;
     const bool extra;  // for draw moves, this represents if the stock was recycled
 
-    static const Move draw(uint8 n) {
-        return Move { .source = WASTE, .dest = WASTE, .source_offset = n };
+    Move(const PileType source, const PileType dest, const int source_pile, const int source_offset, const int dest_pile, const int dest_offset, const bool extra)
+        : source(source), dest(dest), source_pile(source_pile), source_offset(source_offset), dest_pile(dest_pile), dest_offset(dest_offset), extra(extra) {}
+        
+    static const Move draw(const uint8 n, const bool recycle) {
+        return Move(WASTE, WASTE, -1, n, -1, -1, recycle);
     }
 
-    const std::string display() const {
+    virtual const std::string display() const {
         std::stringstream out;
         if (source == WASTE and dest == WASTE) {
             if (extra) out << "recycle, ";

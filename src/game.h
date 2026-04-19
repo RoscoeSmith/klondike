@@ -239,7 +239,15 @@ struct Klondike {
         // get amount of non-NONE cards left in stock
         const uint8 stock_left() const {
             return STOCK_SIZE - waste_cap - std::count(stock.begin() + waste_cap, stock.end(), Card::NONE);
-            
+        }
+
+        vector<Card> stock_next(const uint8 n) const {
+            vector<Card> cards;
+            for (auto it = stock.begin() + waste_cap; it != stock.end(); ++it) {
+                if (!it->is_none()) cards.push_back(*it);
+                if (cards.size() == n) break;
+            }
+            return cards;
         }
 
         vector<Move> get_legal_moves(const uint8 draw_amount) const {
@@ -339,7 +347,7 @@ struct Klondike {
             }
 
             // draw move
-            legal_moves.push_back(Move::draw(std::min(draw_amount, stock_left())));
+            legal_moves.push_back(Move::draw(std::min(draw_amount, stock_left()), waste_cap == STOCK_SIZE));
 
             return legal_moves;
         }
@@ -384,4 +392,90 @@ struct Klondike {
 
 struct RichMove : public Move {
     // TODO: add card data from given state to given move, return as rich move
+    const vector<Card> source_cards;
+    const vector<Card> dest_cards;
+    const Card revealed_card;
+
+    RichMove(const Move& m, const vector<Card> source_cards, const vector<Card> dest_cards, const Card revealed_card)
+        : Move(m), source_cards(source_cards), dest_cards(dest_cards), revealed_card(revealed_card) {}
+
+    static const RichMove make(const Move& m, const Klondike::State& s) {
+        if (m.source == WASTE and m.dest == WASTE) {
+            return RichMove(m, s.stock_next(m.source_offset), {}, Card::NONE);
+        }
+        
+        span<const Card> source_span, dest_span;
+        const Card rc = m.source == TABLEAU and m.extra ? s.tableau[m.source_pile][m.source_offset - 1] : Card::NONE;
+
+        switch (m.source) {
+            case TABLEAU:
+                source_span = span<const Card>(s.tableau[m.source_pile].begin() + m.source_offset, std::find(s.tableau[m.source_pile].begin() + m.source_offset, s.tableau[m.source_pile].end(), Card::NONE));
+                break;
+            case FOUNDATION:
+                source_span = span<const Card>(s.foundation[m.source_pile].begin() + m.source_offset, std::find(s.foundation[m.source_pile].begin() + m.source_offset, s.foundation[m.source_pile].end(), Card::NONE));
+                break;
+            case WASTE:
+                source_span = span<const Card>(s.stock.begin() + m.source_offset, s.stock.begin() + m.source_offset + 1);
+                break;
+        }
+        switch (m.dest) {
+            case TABLEAU:
+                dest_span = span<const Card>(s.tableau[m.dest_pile].begin() + m.dest_offset, std::find(s.tableau[m.dest_pile].begin() + m.dest_offset, s.tableau[m.dest_pile].end(), Card::NONE));
+                break;
+            case FOUNDATION:
+                dest_span = span<const Card>(s.foundation[m.dest_pile].begin() + m.dest_offset, std::find(s.foundation[m.dest_pile].begin() + m.dest_offset, s.foundation[m.dest_pile].end(), Card::NONE));
+                break;
+            case WASTE:
+                dest_span = span<const Card>();  // can't move cards to waste
+                break;
+        }
+
+        vector<Card> sc(source_span.begin(), source_span.end());
+        vector<Card> dc(dest_span.begin(), dest_span.end());
+        if (dc.empty()) dc.push_back(Card::NONE);
+
+        return RichMove(m, sc, dc, rc);
+    }
+
+    const std::string display() const override {
+        std::stringstream out;
+        if (source == WASTE and dest == WASTE) {
+            if (extra) out << "recycle, ";
+            out << "draw " << source_offset;
+            for (const Card& c : source_cards) out << " " << c.get_tag(true);
+        } else {
+            std::string source_str;
+            std::string dest_str;
+            switch (source) {
+                case TABLEAU:
+                    source_str = "tableau";
+                    break;
+                case FOUNDATION:
+                    source_str = "foundation";
+                    break;
+                case WASTE:
+                    source_str = "waste";
+                    break;
+            }
+            switch (dest) {
+                case TABLEAU:
+                    dest_str = "tableau";
+                    break;
+                case FOUNDATION:
+                    dest_str = "foundation";
+                    break;
+                case WASTE:
+                    dest_str = "waste";
+                    break;
+            }
+            out << source_str << " " << source_pile;
+            for (const Card& c : source_cards) out << " " << c.get_tag(true);
+            out << " to " << dest_str << " " << dest_pile;
+            for (const Card& c : dest_cards) out << " " << c.get_tag(true);
+            if (extra) out << ", reveal " << revealed_card.get_tag(true);
+        }
+        return out.str();
+    }
 };
+
+

@@ -42,7 +42,8 @@ int main(int argc, char** argv) {
     cout << "legal moves:\n";
     moves = s.get_legal_moves(3);
     for (const auto& m : moves) {
-        cout << "\t" << m << "\n";
+        RichMove rm = RichMove::make(m, s);
+        cout << "\t" << rm << "\n";
     }
 
     s.do_move(Move{TABLEAU, TABLEAU, 1, 1, 0, 2, true});
@@ -52,7 +53,8 @@ int main(int argc, char** argv) {
     cout << "legal moves:\n";
     moves = s.get_legal_moves(3);
     for (const auto& m : moves) {
-        cout << "\t" << m << "\n";
+        RichMove rm = RichMove::make(m, s);
+        cout << "\t" << rm << "\n";
     }
 
     s.do_move(Move{TABLEAU, FOUNDATION, 1, 0, 0, 0, false});
@@ -62,7 +64,8 @@ int main(int argc, char** argv) {
     cout << "legal moves:\n";
     moves = s.get_legal_moves(3);
     for (const auto& m : moves) {
-        cout << "\t" << m << "\n";
+        RichMove rm = RichMove::make(m, s);
+        cout << "\t" << rm << "\n";
     }
 
     s.do_move(Move{WASTE, WASTE, 0, 3, 0, 0, false});
