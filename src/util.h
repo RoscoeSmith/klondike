@@ -96,13 +96,13 @@ struct Card {
         return rhs >> *this;
     }
 
-    const std::string display() const {
+    const std::string display(const bool thoughtful = false) const {
         if (is_none()) return "[   ]";
         std::stringstream out;
         if (face_up) {
             out << ANSI_CARD_FG_WHITE << "▐" << suit_to_ansi[suit] << ANSI_CARD_BG_FACEUP << rank_to_char[rank] << suit_to_char[suit] << ANSI_RESET << ANSI_CARD_FG_WHITE << "▌" << ANSI_RESET;
         } else {
-            if (false) {  // to be used for thoughtful mode
+            if (thoughtful) {
                 out << ANSI_CARD_FG_DULLWHITE << "▐" << suit_to_ansi[suit] << ANSI_CARD_BG_FACEUP_THOUGHTFUL << rank_to_char[rank] << suit_to_char[suit] << ANSI_RESET << ANSI_CARD_FG_DULLWHITE << "▌" << ANSI_RESET;
             } else {
                 out << ANSI_CARD_FG_WHITE << "▐" << ANSI_CARD_BG_FACEDOWN << ANSI_CARD_FG_WHITE << "▒" << ANSI_CARD_BG_FACEDOWN_HARSH << "░" << ANSI_CARD_BG_FACEDOWN << "▒" << ANSI_RESET << ANSI_CARD_FG_WHITE << "▌" << ANSI_RESET;
@@ -118,7 +118,7 @@ struct Card {
         return out.str();
     }
 
-    const std::string get_tag(const bool ansi = false) const {
+    const std::string get_tag(const bool ansi = false, const bool thoughtful = false) const {
         std::stringstream out;
 
         if (is_none()) {
@@ -129,7 +129,7 @@ struct Card {
             }
         } else {
             if (ansi) {
-                if (false) {  // to be used for thoughtful mode
+                if (thoughtful) {
                     out << ANSI_CARD_BG_FACEUP_THOUGHTFUL;
                 } else {
                     out << ANSI_CARD_BG_FACEUP;

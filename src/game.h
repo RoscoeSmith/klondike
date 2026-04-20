@@ -352,6 +352,20 @@ struct Klondike {
             return legal_moves;
         }
 
+        vector<string> get_display_lines(const bool thoughtful, const bool full_stock, const int h_offset = 0) {
+            vector<string> lines;
+            std::ostringstream s;
+
+            // foundation
+            array<int, 4> fis = foundation_last_card_idxs();
+            for (int i = 0; i < 4; ++i) {
+                if (fis[i] == -1) s << Card::NONEi.display();
+                else s << foundation[i][fis[i]].display(thoughtful);
+            }
+
+            // TODO: finish
+        }
+
         string debug_display() const {
             stringstream out;
 
