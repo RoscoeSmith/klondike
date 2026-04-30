@@ -37,7 +37,7 @@ int main(int argc, char** argv) {
 
     std::vector<Move> moves;
 
-    cout << s.debug_display();
+    cout << s.display(true, true);
 
     cout << "legal moves:\n";
     moves = s.get_legal_moves(3);
@@ -48,7 +48,7 @@ int main(int argc, char** argv) {
 
     s.do_move(Move{TABLEAU, TABLEAU, 1, 1, 0, 2, true});
 
-    cout << s.debug_display();
+    cout << s.display(true, true);
 
     cout << "legal moves:\n";
     moves = s.get_legal_moves(3);
@@ -59,7 +59,7 @@ int main(int argc, char** argv) {
 
     s.do_move(Move{TABLEAU, FOUNDATION, 1, 0, 0, 0, false});
 
-    cout << s.debug_display();
+    cout << s.display(true, true);
 
     cout << "legal moves:\n";
     moves = s.get_legal_moves(3);
@@ -68,98 +68,98 @@ int main(int argc, char** argv) {
         cout << "\t" << rm << "\n";
     }
 
-    s.do_move(Move{WASTE, WASTE, 0, 3, 0, 0, false});
+    // s.do_move(Move{WASTE, WASTE, 0, 3, 0, 0, false});
     
-    cout << s.debug_display();
+    // cout << s.debug_display();
 
-    s.do_move(Move{WASTE, WASTE, 0, 3, 0, 0, false});
+    // s.do_move(Move{WASTE, WASTE, 0, 3, 0, 0, false});
     
-    cout << s.debug_display();
+    // cout << s.debug_display();
 
-    s.do_move(Move{WASTE, TABLEAU, 0, 0, 0, 4, false});
+    // s.do_move(Move{WASTE, TABLEAU, 0, 0, 0, 4, false});
 
-    cout << s.debug_display();
+    // cout << s.debug_display();
 
-    s.do_move(Move{WASTE, WASTE, 0, 3, 0, 0, false});
+    // s.do_move(Move{WASTE, WASTE, 0, 3, 0, 0, false});
     
-    cout << s.debug_display();
+    // cout << s.debug_display();
 
-    s.do_move(Move{WASTE, WASTE, 0, 3, 0, 0, false});
+    // s.do_move(Move{WASTE, WASTE, 0, 3, 0, 0, false});
     
-    cout << s.debug_display();
+    // cout << s.debug_display();
 
-    s.do_move(Move{WASTE, WASTE, 0, 3, 0, 0, false});
+    // s.do_move(Move{WASTE, WASTE, 0, 3, 0, 0, false});
     
-    cout << s.debug_display();
+    // cout << s.debug_display();
 
-    s.do_move(Move{WASTE, WASTE, 0, 3, 0, 0, false});
+    // s.do_move(Move{WASTE, WASTE, 0, 3, 0, 0, false});
     
-    cout << s.debug_display();
+    // cout << s.debug_display();
 
-    s.do_move(Move{WASTE, WASTE, 0, 3, 0, 0, false});
+    // s.do_move(Move{WASTE, WASTE, 0, 3, 0, 0, false});
     
-    cout << s.debug_display();
+    // cout << s.debug_display();
 
-    s.do_move(Move{WASTE, WASTE, 0, 3, 0, 0, false});
+    // s.do_move(Move{WASTE, WASTE, 0, 3, 0, 0, false});
     
-    cout << s.debug_display();
+    // cout << s.debug_display();
 
-    s.do_move(Move{WASTE, WASTE, 0, 3, 0, 0, false});
+    // s.do_move(Move{WASTE, WASTE, 0, 3, 0, 0, false});
     
-    cout << s.debug_display();
+    // cout << s.debug_display();
 
-    s.do_move(Move{WASTE, WASTE, 0, 3, 0, 0, false});
+    // s.do_move(Move{WASTE, WASTE, 0, 3, 0, 0, false});
     
-    cout << s.debug_display();
+    // cout << s.debug_display();
 
-    s.do_move(Move{WASTE, WASTE, 0, 3, 0, 0, false});
+    // s.do_move(Move{WASTE, WASTE, 0, 3, 0, 0, false});
     
-    cout << s.debug_display();
+    // cout << s.debug_display();
 
-    s.do_move(Move{WASTE, WASTE, 0, 3, 0, 0, false});
+    // s.do_move(Move{WASTE, WASTE, 0, 3, 0, 0, false});
     
-    cout << s.debug_display();
+    // cout << s.debug_display();
 
-    s.do_move(Move{WASTE, WASTE, 0, 3, 0, 0, false});
+    // s.do_move(Move{WASTE, WASTE, 0, 3, 0, 0, false});
     
-    cout << s.debug_display();
+    // cout << s.debug_display();
 
-    s.do_move(Move{WASTE, WASTE, 0, 3, 0, 0, false});
+    // s.do_move(Move{WASTE, WASTE, 0, 3, 0, 0, false});
     
-    cout << s.debug_display();
+    // cout << s.debug_display();
 
-    s.do_move(Move{WASTE, WASTE, 0, 3, 0, 0, false});
+    // s.do_move(Move{WASTE, WASTE, 0, 3, 0, 0, false});
     
-    cout << s.debug_display();
+    // cout << s.debug_display();
 
-    s.do_move(Move{WASTE, WASTE, 0, 3, 0, 0, false});
+    // s.do_move(Move{WASTE, WASTE, 0, 3, 0, 0, false});
     
-    cout << s.debug_display();
+    // cout << s.debug_display();
 
-    s.do_move(Move{WASTE, WASTE, 0, 3, 0, 0, false});
+    // s.do_move(Move{WASTE, WASTE, 0, 3, 0, 0, false});
     
-    cout << s.debug_display();
+    // cout << s.debug_display();
 
-    s.do_move(Move{WASTE, WASTE, 0, 3, 0, 0, false});
+    // s.do_move(Move{WASTE, WASTE, 0, 3, 0, 0, false});
     
-    cout << s.debug_display();
+    // cout << s.debug_display();
 
-    // should be the last draw?
-    s.do_move(Move{WASTE, WASTE, 0, 3, 0, 0, false});
+    // // should be the last draw?
+    // s.do_move(Move{WASTE, WASTE, 0, 3, 0, 0, false});
     
-    cout << s.debug_display();
+    // cout << s.debug_display();
 
-    cout << "===  UNDO  ===\n";
+    // cout << "===  UNDO  ===\n";
 
-    s.undo_move(Move{WASTE, WASTE, 0, 3, 0, 0, false});
+    // s.undo_move(Move{WASTE, WASTE, 0, 3, 0, 0, false});
 
-    cout << s.debug_display();
+    // cout << s.debug_display();
 
-    cout << "===  UNDO  ===\n";
+    // cout << "===  UNDO  ===\n";
 
-    s.undo_move(Move{WASTE, WASTE, 0, 3, 0, 0, false});
+    // s.undo_move(Move{WASTE, WASTE, 0, 3, 0, 0, false});
 
-    cout << s.debug_display();
+    // cout << s.debug_display();
 
     return 0;
 }

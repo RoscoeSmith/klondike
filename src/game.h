@@ -251,6 +251,7 @@ struct Klondike {
         }
 
         vector<Move> get_legal_moves(const uint8 draw_amount) const {
+            // TODO: fix
             vector<Move> legal_moves;
 
             // get all last cards in piles
@@ -260,6 +261,8 @@ struct Klondike {
             // get all face-up cards moveable to each last card
             const array<int, 7> tableau_first_idxs = tableau_first_face_up_card_idxs();
             const array<int, 4> foundation_first_idxs = foundation_first_face_up_card_idxs();
+
+            cout << "1" << "\n";
 
             // moves to tableau
             for (int dest = 0; dest < 7; ++dest) {
@@ -297,10 +300,10 @@ struct Klondike {
 
                     // look for card that can go next in pile
                     if (tableau_last_idxs[dest] != -1) assert(last_card.face_up);
-
+                    
                     // check other tableau piles
                     for (int source = 0; source < 7; ++source) {
-                        if (source == dest) continue;
+                        if (source == dest or tableau_first_idxs[source] == -1) continue;
                         const Card first_card = tableau[source][tableau_first_idxs[source]];
                         const int walk = first_card.rank - (last_card.is_none() ? 0 : last_card.rank - 1);  // no. of cards down in sequence to get valid card
                         const int fi = tableau_first_idxs[source];
@@ -318,17 +321,24 @@ struct Klondike {
 
                     // check foundation
                     for (int source = 0; source < 4; ++source) {
-                        if (foundation[source][foundation_last_idxs[source]] >> last_card) {
+                        Card top_card;
+                        if (foundation_last_idxs[source] == -1) top_card = Card::NONE;
+                        else top_card = foundation[source][foundation_last_idxs[source]];
+                        if (top_card >> last_card) {
                             legal_moves.emplace_back(FOUNDATION, TABLEAU, source, foundation_last_idxs[source], dest, tableau_last_idxs[dest] + 1, false);
                         }
                     }
                 // }  // see above info
             }
 
+            cout << "2" << "\n";
+
             // moves to foundation
             for (int dest = 0; dest < 4; ++dest) {
                 if (foundation_last_idxs[dest] == FOUNDATION_SIZE) continue;  // can't add to pile
-                const Card top_card = foundation[dest][foundation_last_idxs[dest]];
+                Card top_card;
+                if (foundation_last_idxs[dest] == -1) top_card = Card::NONE;
+                else top_card = foundation[dest][foundation_last_idxs[dest]];
 
                 // check tableau piles
                 for (int source = 0; source < 7; ++source) {
@@ -340,11 +350,15 @@ struct Klondike {
                     }
                 }
 
+            cout << "3" << "\n";
+
                 // check waste
                 if (waste_cap > 0 and stock[waste_cap - 1] ^ top_card) {
                     legal_moves.emplace_back(WASTE, FOUNDATION, -1, waste_cap - 1, dest, foundation_last_idxs[dest] + 1, false);
                 }
             }
+
+            cout << "4" << "\n";
 
             // draw move
             legal_moves.push_back(Move::draw(std::min(draw_amount, stock_left()), waste_cap == STOCK_SIZE));
@@ -352,18 +366,54 @@ struct Klondike {
             return legal_moves;
         }
 
-        vector<string> get_display_lines(const bool thoughtful, const bool full_stock, const int h_offset = 0) {
+        vector<string> get_display_lines(const bool thoughtful, const bool full_stock, const int h_offset = 0) const {
             vector<string> lines;
             std::ostringstream s;
 
             // foundation
             array<int, 4> fis = foundation_last_card_idxs();
             for (int i = 0; i < 4; ++i) {
-                if (fis[i] == -1) s << Card::NONEi.display();
+                if (fis[i] == -1) s << Card::NONE.display();
                 else s << foundation[i][fis[i]].display(thoughtful);
             }
+            lines.push_back(s.str());
+            s.str("");
+            s.clear();
+            lines.push_back("");  // buffer between foundation and tableau
 
-            // TODO: finish
+            // tableau
+            for (int r = 0; r < TABLEAU_SIZE; ++r) {
+                for (int c = 0; c < 7; ++c) {
+                    s << tableau[c][r].display(thoughtful);
+                }
+                lines.push_back(s.str());
+                s.str("");
+                s.clear();
+            }
+
+            // stock
+            cout << "lines[0].size(): " << lines[0].length() << "\n";
+            lines[0].append((5 * 7) - lines[0].length() + 2, ' ');
+            lines[0].append((waste_cap == STOCK_SIZE ? Card::NONE.display() : Card(1, SPADE, false).display()) + " " + std::to_string(STOCK_SIZE - waste_cap));
+            if (full_stock) {
+                for (int i = 0; i < STOCK_SIZE / 3; ++i) {
+                    lines[i + 2].append("  ");
+                    for (int j = 0; j < 3; ++j) {
+                        lines[i + 2].append(stock[i / 3 + j].display(thoughtful));
+                    }
+                }
+            } else {
+                // TODO: finish
+            }
+
+            return lines;
+        }
+
+        string display(const bool thoughtful, const bool full_stock) const {
+            vector<string> lines = get_display_lines(thoughtful, full_stock);
+            stringstream out;
+            for (const auto& line : lines) out << line << "\n";
+            return out.str();
         }
 
         string debug_display() const {
