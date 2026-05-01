@@ -62,8 +62,11 @@ static std::array<std::string, 5> suit_to_char = {
     "♠", "♥", "♣", "♦", "x"
 };
 
+// static std::array<std::string, 5> suit_to_ansi = {
+//     ANSI_CARD_FG_BLACK, ANSI_CARD_FG_RED, ANSI_CARD_FG_GREEN, ANSI_CARD_FG_BLUE, ""
+// };
 static std::array<std::string, 5> suit_to_ansi = {
-    ANSI_CARD_FG_BLACK, ANSI_CARD_FG_RED, ANSI_CARD_FG_GREEN, ANSI_CARD_FG_BLUE, ""
+    ANSI_CARD_FG_BLACK, ANSI_CARD_FG_RED, ANSI_CARD_FG_BLACK, ANSI_CARD_FG_RED, ""
 };
 
 struct Card {

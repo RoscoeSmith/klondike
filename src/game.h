@@ -54,13 +54,6 @@ struct Klondike {
         void move_cards(span<Card>& source, span<Card>& dest) {
             assert(source.size() == dest.size());  // should be guaranteed by do_move
 
-            cout << "source size: " << source.size() << ", dest size: " << dest.size() << "\n";
-            cout << "view into source:";
-            for (const Card& c : source) cout << c;
-            cout << "\nview into dest:";
-            for (const Card& c : dest) cout << c;
-            cout << "\n";
-            
             for (int i = 0; i < source.size(); ++i) {
                 dest[i] = source[i];
                 source[i] = Card::NONE;
@@ -251,7 +244,6 @@ struct Klondike {
         }
 
         vector<Move> get_legal_moves(const uint8 draw_amount) const {
-            // TODO: fix
             vector<Move> legal_moves;
 
             // get all last cards in piles
@@ -261,8 +253,6 @@ struct Klondike {
             // get all face-up cards moveable to each last card
             const array<int, 7> tableau_first_idxs = tableau_first_face_up_card_idxs();
             const array<int, 4> foundation_first_idxs = foundation_first_face_up_card_idxs();
-
-            cout << "1" << "\n";
 
             // moves to tableau
             for (int dest = 0; dest < 7; ++dest) {
@@ -307,6 +297,7 @@ struct Klondike {
                         const Card first_card = tableau[source][tableau_first_idxs[source]];
                         const int walk = first_card.rank - (last_card.is_none() ? 0 : last_card.rank - 1);  // no. of cards down in sequence to get valid card
                         const int fi = tableau_first_idxs[source];
+                        if (walk < 0) continue;  // last card in source pile isn't moveable to dest pile
                         if (fi + walk > tableau_last_idxs[source]) continue;  // sequence ends before possible valid card
                         if (tableau[source][fi + walk] >> last_card) {
                             const bool reveal = fi > 0 and !tableau[source][fi - 1].face_up;
@@ -331,8 +322,6 @@ struct Klondike {
                 // }  // see above info
             }
 
-            cout << "2" << "\n";
-
             // moves to foundation
             for (int dest = 0; dest < 4; ++dest) {
                 if (foundation_last_idxs[dest] == FOUNDATION_SIZE) continue;  // can't add to pile
@@ -350,15 +339,11 @@ struct Klondike {
                     }
                 }
 
-            cout << "3" << "\n";
-
                 // check waste
                 if (waste_cap > 0 and stock[waste_cap - 1] ^ top_card) {
                     legal_moves.emplace_back(WASTE, FOUNDATION, -1, waste_cap - 1, dest, foundation_last_idxs[dest] + 1, false);
                 }
             }
-
-            cout << "4" << "\n";
 
             // draw move
             legal_moves.push_back(Move::draw(std::min(draw_amount, stock_left()), waste_cap == STOCK_SIZE));
@@ -392,14 +377,13 @@ struct Klondike {
             }
 
             // stock
-            cout << "lines[0].size(): " << lines[0].length() << "\n";
-            lines[0].append((5 * 7) - lines[0].length() + 2, ' ');
-            lines[0].append((waste_cap == STOCK_SIZE ? Card::NONE.display() : Card(1, SPADE, false).display()) + " " + std::to_string(STOCK_SIZE - waste_cap));
+            lines[0].append(17, ' ');
+            lines[0] += waste_cap == STOCK_SIZE ? Card::NONE.display() : Card(1, SPADE, false).display() + " " + std::to_string(STOCK_SIZE - waste_cap);
             if (full_stock) {
                 for (int i = 0; i < STOCK_SIZE / 3; ++i) {
-                    lines[i + 2].append("  ");
+                    lines[i + 2].append(2, ' ');
                     for (int j = 0; j < 3; ++j) {
-                        lines[i + 2].append(stock[i / 3 + j].display(thoughtful));
+                        lines[i + 2] += stock[i / 3 + j].display(thoughtful);
                     }
                 }
             } else {
